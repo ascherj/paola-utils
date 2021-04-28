@@ -18,7 +18,7 @@
   "homepage": "https://github.com/hackreactor/paola-utils#readme",
   "dependencies": {
     "dotenv": "^8.2.0",
-    "googleapis": "^49.0.0",
+    "googleapis": "^39.2.0",
     "jsforce": "^1.9.3",
     "node-fetch": "^2.6.0"
   },
