@@ -54,16 +54,17 @@ function getAccessToken(oAuth2Client, callback) {
  * @param {Object} credentials The authorization client credentials.
  * @param {function} callback The callback to call with the authorized client.
  */
- function authorize(credentials, callback) {
+async function authorize(credentials, callback) {
   const { client_secret, client_id, redirect_uris } = credentials.installed;
   const oAuth2Client = new google.auth.OAuth2(client_id, client_secret, redirect_uris[0]);
 
-  readFile(TOKEN_PATH)
-    .then((token) => {
-      oAuth2Client.setCredentials(JSON.parse(token));
-      callback(oAuth2Client);
-    })
-    .catch(() => getAccessToken(oAuth2Client, callback));
+  try {
+    const token = await readFile(TOKEN_PATH);
+    oAuth2Client.setCredentials(JSON.parse(token));
+    return oAuth2Client;
+  } catch (err) {
+    return getAccessToken(oAuth2Client, callback);
+  }
 }
 
 /**
@@ -73,28 +74,27 @@ function getAccessToken(oAuth2Client, callback) {
 exports.listEvents = async () => {
   try {
     const credentials = await readFile('./googleCalendar/credentials.json');
+    const auth = await authorize(JSON.parse(credentials));
+    const calendar = google.calendar({ version: 'v3', auth });
 
-    authorize(JSON.parse(credentials), (auth) => {
-      const calendar = google.calendar({ version: 'v3', auth });
-      calendar.events.list({
-        calendarId: 'primary',
-        timeMin: (new Date()).toISOString(),
-        maxResults: 10,
-        singleEvents: true,
-        orderBy: 'startTime',
-      }, (err, res) => {
-        if (err) return console.log('The API returned an error:', err);
-        const events = res.data.items;
-        if (events.length) {
-          console.log('Upcoming 10 events:');
-          events.map((event, i) => {
-            const start = event.start.dateTime || event.start.date;
-            console.log(`${start} - ${event.summary}`);
-          });
-        } else {
-          console.log('No upcoming events found.');
-        }
-      });
+    calendar.events.list({
+      calendarId: 'primary',
+      timeMin: (new Date()).toISOString(),
+      maxResults: 10,
+      singleEvents: true,
+      orderBy: 'startTime',
+    }, (err, res) => {
+      if (err) return console.log('The API returned an error:', err);
+      const events = res.data.items;
+      if (events.length) {
+        console.log('Upcoming 10 events:');
+        events.map((event, i) => {
+          const start = event.start.dateTime || event.start.date;
+          console.log(`${start} - ${event.summary}`);
+        });
+      } else {
+        console.log('No upcoming events found.');
+      }
     });
   } catch (err) {
     console.log(err);
