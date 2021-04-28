@@ -1,3 +1,4 @@
+/* eslint-disable camelcase */
 const fs = require('fs');
 const util = require('util');
 const readline = require('readline');
@@ -15,24 +16,6 @@ const SCOPES = [
 const TOKEN_PATH = './googleCalendar/token.json';
 
 const readFile = util.promisify(fs.readFile);
-
-/**
- * Create an OAuth2 client with the given credentials, and then execute the
- * given callback function.
- * @param {Object} credentials The authorization client credentials.
- * @param {function} callback The callback to call with the authorized client.
- */
-function authorize(credentials, callback) {
-  const { client_secret, client_id, redirect_uris } = credentials.installed;
-  const oAuth2Client = new google.auth.OAuth2(client_id, client_secret, redirect_uris[0]);
-
-  // Check if we have previously stored a token.
-  fs.readFile(TOKEN_PATH, (err, token) => {
-    if (err) return getAccessToken(oAuth2Client, callback);
-    oAuth2Client.setCredentials(JSON.parse(token));
-    callback(oAuth2Client);
-  });
-}
 
 /**
  * Get and store new token after prompting for user authorization, and then
@@ -63,6 +46,24 @@ function getAccessToken(oAuth2Client, callback) {
       callback(oAuth2Client);
     });
   });
+}
+
+/**
+ * Create an OAuth2 client with the given credentials, and then execute the
+ * given callback function.
+ * @param {Object} credentials The authorization client credentials.
+ * @param {function} callback The callback to call with the authorized client.
+ */
+ function authorize(credentials, callback) {
+  const { client_secret, client_id, redirect_uris } = credentials.installed;
+  const oAuth2Client = new google.auth.OAuth2(client_id, client_secret, redirect_uris[0]);
+
+  readFile(TOKEN_PATH)
+    .then((token) => {
+      oAuth2Client.setCredentials(JSON.parse(token));
+      callback(oAuth2Client);
+    })
+    .catch(() => getAccessToken(oAuth2Client, callback));
 }
 
 /**
