@@ -104,21 +104,22 @@ exports.listEvents = async () => {
 /**
  * Add an event to the authorized user's calendar via Quick Add.
  * @param {string} text The text to use as the title of the event.
+ * @param {string} [calendarId] The calendar ID to add the event to. (defaults to user's personal calendar)
  */
-exports.addEvent = async (text) => {
+exports.quickAddEvent = async (text, calendarId = 'primary') => {
   try {
     const credentials = await readFile('./googleCalendar/credentials.json');
     const auth = await authorize(JSON.parse(credentials));
     const calendar = google.calendar({ version: 'v3', auth });
 
     calendar.events.quickAdd({
-      calendarId: 'primary',
+      calendarId,
       text,
     }, (err, res) => {
-      if (err) return console.log('The API returned an error:', err);
-      console.log('Successfully added an event!', res);
+      if (err) return console.error('The API returned an error:', err);
+      console.log(`Successfully added an event to ${res.data.organizer.displayName}! 🙌`);
     });
   } catch (err) {
-    console.log(err);
+    console.error(err);
   }
 };

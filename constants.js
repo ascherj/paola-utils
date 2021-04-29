@@ -9,4 +9,5 @@ module.exports = {
   Last_Day_Of_Attendance__c, Last_Day_of_Attendance_Acronym__c,
   Official_Withdrawal_Date__c`,
   LEARN_API_COHORTS: ' https://learn-2.galvanize.com/api/v1/cohorts',
+  OFFICE_HOURS_GOOGLE_CALENDAR_ID: 'galvanize.com_da0a81nc4q9iqqh3mo86djj2q8@group.calendar.google.com',
 };

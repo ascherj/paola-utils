@@ -12,6 +12,7 @@
 // const Learn = require('./learn');
 // const Slack = require('./slack');
 const GCalendar = require('./googleCalendar');
+const { OFFICE_HOURS_GOOGLE_CALENDAR_ID } = require('./constants.js');
 // const subjectQuery = 'upcoming deadline';
 // const toList = ['paola@galvanize.com'];
 // const ccList = [];
@@ -53,4 +54,5 @@ exports.GCalendar = GCalendar;
 //   "prueba mcPrueba"
 // ];
 // console.log(Slack.createChannelPerStudent(list));
-GCalendar.listEvents();
+// GCalendar.listEvents();
+GCalendar.quickAddEvent('does it work? 🤔', OFFICE_HOURS_GOOGLE_CALENDAR_ID);
