@@ -55,4 +55,5 @@ exports.GCalendar = GCalendar;
 // ];
 // console.log(Slack.createChannelPerStudent(list));
 // GCalendar.listEvents();
-GCalendar.quickAddEvent('does it work? 🤔', OFFICE_HOURS_GOOGLE_CALENDAR_ID);
+// GCalendar.quickAddEvent('does it work? 🤔', OFFICE_HOURS_GOOGLE_CALENDAR_ID);
+GCalendar.addEvent(OFFICE_HOURS_GOOGLE_CALENDAR_ID);

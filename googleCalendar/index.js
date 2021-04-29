@@ -69,13 +69,25 @@ async function authorize(credentials) {
 }
 
 /**
+ * Get an authorized Calendar with the stored credentials.
+ * @returns {Promise<calendar_v3.Calendar>} A Promise resolving a Calendar object.
+ */
+async function getAuthorizedCalendar() {
+  try {
+    const credentials = await readFile('./googleCalendar/credentials.json');
+    const auth = await authorize(JSON.parse(credentials));
+    return google.calendar({ version: 'v3', auth });
+  } catch (err) {
+    console.error('Error getting authorized calendar:', err);
+  }
+}
+
+/**
  * List the next 10 events on the user's primary calendar.
  */
 exports.listEvents = async () => {
   try {
-    const credentials = await readFile('./googleCalendar/credentials.json');
-    const auth = await authorize(JSON.parse(credentials));
-    const calendar = google.calendar({ version: 'v3', auth });
+    const calendar = await getAuthorizedCalendar();
 
     calendar.events.list({
       calendarId: 'primary',
@@ -97,7 +109,7 @@ exports.listEvents = async () => {
       }
     });
   } catch (err) {
-    console.error('IT DIDNT WORK', err);
+    console.error('Error listing events:', err);
   }
 };
 
@@ -108,9 +120,7 @@ exports.listEvents = async () => {
  */
 exports.quickAddEvent = async (text, calendarId = 'primary') => {
   try {
-    const credentials = await readFile('./googleCalendar/credentials.json');
-    const auth = await authorize(JSON.parse(credentials));
-    const calendar = google.calendar({ version: 'v3', auth });
+    const calendar = await getAuthorizedCalendar();
 
     calendar.events.quickAdd({
       calendarId,
@@ -118,6 +128,46 @@ exports.quickAddEvent = async (text, calendarId = 'primary') => {
     }, (err, res) => {
       if (err) return console.error('The API returned an error:', err);
       console.log(`Successfully added an event to ${res.data.organizer.displayName}! 🙌`);
+    });
+  } catch (err) {
+    console.error(err);
+  }
+};
+
+exports.addEvent = async (calendarId = 'primary') => {
+  const event = {
+    summary: 'Does it work? 🤔',
+    location: 'https://zoom.us/j/8484848144',
+    description: '',
+    start: {
+      dateTime: '2021-04-29T16:00:00-04:00',
+      timeZone: 'America/New_York',
+    },
+    end: {
+      dateTime: '2021-04-29T18:00:00-04:00',
+      timeZone: 'America/New_York',
+    },
+    attendees: [
+      { email: 'jake.ascher@galvanize.com' },
+    ],
+    reminders: {
+      useDefault: true,
+    },
+  };
+
+  try {
+    const calendar = await getAuthorizedCalendar();
+
+    calendar.events.insert({
+      calendarId,
+      resource: event,
+      sendUpdates: 'all',
+    }, (err, event) => {
+      if (err) {
+        console.error('There was an error contacting the Calendar service:', err);
+        return;
+      }
+      console.log('Event created:', event);
     });
   } catch (err) {
     console.error(err);
