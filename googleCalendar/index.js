@@ -18,43 +18,43 @@ const TOKEN_PATH = './googleCalendar/token.json';
 const readFile = util.promisify(fs.readFile);
 
 /**
- * Get and store new token after prompting for user authorization, and then
- * execute the given callback with the authorized OAuth2 client.
+ * Get and store new token after prompting for user authorization.
  * @param {google.auth.OAuth2} oAuth2Client The OAuth2 client to get token for.
- * @param {getEventsCallback} callback The callback for the authorized client.
+ * @returns {Promise<google.auth.OAuth2>} A Promise resolving an authorized OAuth2 client.
  */
-function getAccessToken(oAuth2Client, callback) {
-  const authUrl = oAuth2Client.generateAuthUrl({
-    access_type: 'offline',
-    scope: SCOPES,
-  });
-  console.log('Authorize this app by visiting this url:', authUrl);
-  const rl = readline.createInterface({
-    input: process.stdin,
-    output: process.stdout,
-  });
-  rl.question('Enter the code from that page here: ', (code) => {
-    rl.close();
-    oAuth2Client.getToken(code, (err, token) => {
-      if (err) return console.error('Error retrieving access token', err);
-      oAuth2Client.setCredentials(token);
-      // Store the token to disk for later program executions
-      fs.writeFile(TOKEN_PATH, JSON.stringify(token), (err) => {
-        if (err) return console.error(err);
-        console.log('Token stored to', TOKEN_PATH);
+function getAccessToken(oAuth2Client) {
+  return new Promise((resolve, reject) => {
+    const authUrl = oAuth2Client.generateAuthUrl({
+      access_type: 'offline',
+      scope: SCOPES,
+    });
+    console.log('Authorize this app by visiting this url:', authUrl);
+    const rl = readline.createInterface({
+      input: process.stdin,
+      output: process.stdout,
+    });
+    rl.question('Enter the code from that page here: ', (code) => {
+      rl.close();
+      oAuth2Client.getToken(code, (err, token) => {
+        if (err) reject(err);
+        oAuth2Client.setCredentials(token);
+        // Store the token to disk for later program executions
+        fs.writeFile(TOKEN_PATH, JSON.stringify(token), (err) => {
+          if (err) reject(err);
+          console.log('Token stored to', TOKEN_PATH);
+          resolve(oAuth2Client);
+        });
       });
-      callback(oAuth2Client);
     });
   });
 }
 
 /**
- * Create an OAuth2 client with the given credentials, and then execute the
- * given callback function.
+ * Create an OAuth2 client with the given credentials.
  * @param {Object} credentials The authorization client credentials.
- * @param {function} callback The callback to call with the authorized client.
+ * @returns {google.auth.OAuth2} An authorized OAuth2 client.
  */
-async function authorize(credentials, callback) {
+async function authorize(credentials) {
   const { client_secret, client_id, redirect_uris } = credentials.installed;
   const oAuth2Client = new google.auth.OAuth2(client_id, client_secret, redirect_uris[0]);
 
@@ -63,13 +63,13 @@ async function authorize(credentials, callback) {
     oAuth2Client.setCredentials(JSON.parse(token));
     return oAuth2Client;
   } catch (err) {
-    return getAccessToken(oAuth2Client, callback);
+    // No token found; get token.
+    return getAccessToken(oAuth2Client);
   }
 }
 
 /**
- * Lists the next 10 events on the user's primary calendar.
- * @param {google.auth.OAuth2} auth An authorized OAuth2 client.
+ * List the next 10 events on the user's primary calendar.
  */
 exports.listEvents = async () => {
   try {
@@ -84,7 +84,7 @@ exports.listEvents = async () => {
       singleEvents: true,
       orderBy: 'startTime',
     }, (err, res) => {
-      if (err) return console.log('The API returned an error:', err);
+      if (err) return console.error('The API returned an error:', err);
       const events = res.data.items;
       if (events.length) {
         console.log('Upcoming 10 events:');
@@ -97,26 +97,28 @@ exports.listEvents = async () => {
       }
     });
   } catch (err) {
-    console.log(err);
+    console.error('IT DIDNT WORK', err);
   }
 };
 
-function addEvent(auth, text) {
-  const calendar = google.calendar({ version: 'v3', auth });
-  calendar.events.quickAdd({
-    calendarId: 'primary',
-    text,
-  }, (err, res) => {
-    if (err) return console.log('The API returned an error:', err);
-    console.log('Successfully added an event!', res);
-  });
-}
+/**
+ * Add an event to the authorized user's calendar via Quick Add.
+ * @param {string} text The text to use as the title of the event.
+ */
+exports.addEvent = async (text) => {
+  try {
+    const credentials = await readFile('./googleCalendar/credentials.json');
+    const auth = await authorize(JSON.parse(credentials));
+    const calendar = google.calendar({ version: 'v3', auth });
 
-// Load client secrets from a local file.
-// fs.readFile('credentials.json', (err, content) => {
-//   if (err) return console.log('Error loading client secret file:', err);
-//   // Authorize a client with credentials, then call the Google Calendar API.
-//   authorize(JSON.parse(content), (auth) => {
-//     addEvent(auth, 'testing');
-//   });
-// });
+    calendar.events.quickAdd({
+      calendarId: 'primary',
+      text,
+    }, (err, res) => {
+      if (err) return console.log('The API returned an error:', err);
+      console.log('Successfully added an event!', res);
+    });
+  } catch (err) {
+    console.log(err);
+  }
+};
