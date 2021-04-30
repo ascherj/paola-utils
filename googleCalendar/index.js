@@ -134,22 +134,36 @@ exports.quickAddEvent = async (text, calendarId = 'primary') => {
   }
 };
 
-exports.addEvent = async (calendarId = 'primary') => {
+/**
+ * Add an event to a Calendar.
+ * @param {object} eventDetails An object containing the details of the event to add.
+ * @param {string} eventDetails.calendarId The calendar ID to add the event to.
+ * @param {string} eventDetails.summary The title to use for the event.
+ * @param {string} eventDetails.location The locatin to use for the event.
+ * @param {string} eventDetails.description The description to use for the event.
+ * @param {string} eventDetails.startTime The time, as a combined date-time value (formatted according to RFC3339).
+ * @param {string} eventDetails.endTime The time, as a combined date-time value (formatted according to RFC3339).
+ * @param {string} eventDetails.timeZone The time zone in which the time is specified. (Formatted as an IANA Time Zone Database name, e.g. "Europe/Zurich".)
+ * @param {string[]} eventDetails.guestList A list of guests to add to the event.
+ * @para
+ */
+exports.addEvent = async ({
+  calendarId, summary, location, description, startTime, endTime, timeZone, guestList,
+}) => {
+  // Object formatted in accordance with expectations of Google Calendar API
   const event = {
-    summary: 'Does it work? 🤔',
-    location: 'https://zoom.us/j/8484848144',
-    description: '',
+    summary,
+    location,
+    description,
     start: {
-      dateTime: '2021-04-29T16:00:00-04:00',
-      timeZone: 'America/New_York',
+      dateTime: startTime,
+      timeZone,
     },
     end: {
-      dateTime: '2021-04-29T18:00:00-04:00',
-      timeZone: 'America/New_York',
+      dateTime: endTime,
+      timeZone,
     },
-    attendees: [
-      { email: 'jake.ascher@galvanize.com' },
-    ],
+    attendees: guestList.map((guest) => ({ email: guest })),
     reminders: {
       useDefault: true,
     },
@@ -167,9 +181,21 @@ exports.addEvent = async (calendarId = 'primary') => {
         console.error('There was an error contacting the Calendar service:', err);
         return;
       }
-      console.log('Event created:', event);
+      console.log('Event created! 🎉');
     });
   } catch (err) {
     console.error(err);
   }
+};
+
+exports.updateTitle = async (calendarId, newTitle) => {
+
+};
+
+exports.addGuest = async (calendarId, guest) => {
+
+};
+
+exports.removeGuest = async (calendarId, guest) => {
+
 };

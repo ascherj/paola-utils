@@ -56,4 +56,18 @@ exports.GCalendar = GCalendar;
 // console.log(Slack.createChannelPerStudent(list));
 // GCalendar.listEvents();
 // GCalendar.quickAddEvent('does it work? 🤔', OFFICE_HOURS_GOOGLE_CALENDAR_ID);
-GCalendar.addEvent(OFFICE_HOURS_GOOGLE_CALENDAR_ID);
+
+const eventDetails = {
+  calendarId: OFFICE_HOURS_GOOGLE_CALENDAR_ID,
+  summary: 'Test Event',
+  location: 'https://zoom.us/j/8484848144',
+  description: 'This is a test event. Please disregard! 😬',
+  startTime: '2021-04-30T14:00:00',
+  endTime: '2021-04-30T15:00:00',
+  timeZone: 'America/New_York',
+  guestList: [
+    'jake.ascher@galvanize.com',
+    'ascherj@gmail.com',
+  ],
+};
+GCalendar.addEvent(eventDetails);
